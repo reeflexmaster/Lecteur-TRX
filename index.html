@@ -326,7 +326,7 @@ au.ontimeupdate=()=>{
   $('#td').textContent=fmt(au.duration);
   if(!S.drag&&au.duration){const p=au.currentTime/au.duration*100;$('#tc').textContent=fmt(au.currentTime);sk.value=p*10;setP(p)}
 };
-au.onplay=()=>{ico($('#bPlay'),'pause');ico($('#mPlay'),'pause')};
+au.onplay=()=>{ico($('#bPlay'),'pause');ico($('#mPlay'),'pause');setMS()};
 au.onpause=()=>{ico($('#bPlay'),'play');ico($('#mPlay'),'play')};
 au.onended=()=>next(true);
 function toast(m){const e=$('#toast');e.textContent=m;e.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('show'),1700)}
@@ -366,11 +366,14 @@ $('#fQ').onclick=()=>{renderQ();$('#qp').classList.add('open')};
 $('#qClose').onclick=()=>$('#qp').classList.remove('open');
 $('#qClear').onclick=()=>{S.queue=[];S.pn=0;refQ()};
 
-if('mediaSession'in navigator){
-  const m=navigator.mediaSession;
-  m.setActionHandler('play',()=>au.play());m.setActionHandler('pause',()=>au.pause());
-  m.setActionHandler('nexttrack',()=>next(false));m.setActionHandler('previoustrack',prev);
+function setMS(){
+  if(!('mediaSession'in navigator))return;
+  const m=navigator.mediaSession,h=(a,f)=>{try{m.setActionHandler(a,f)}catch(e){}};
+  h('play',()=>au.play());h('pause',()=>au.pause());
+  h('nexttrack',()=>next(false));h('previoustrack',prev);
+  h('seekbackward',null);h('seekforward',null);
 }
+setMS();
 let DB=null;
 const dbp=new Promise(res=>{try{const r=indexedDB.open('trx',1);r.onupgradeneeded=()=>r.result.createObjectStore('tracks',{keyPath:'key'});r.onsuccess=()=>{DB=r.result;res(DB)};r.onerror=r.onblocked=()=>res(null)}catch(e){res(null)}});
 async function tx(mode,fn){
